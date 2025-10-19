@@ -1,1 +1,20 @@
-<h1>Restaurantes encontrados: {{ restaurantes }}</h1>
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <h1>Restaurantes Disponíveis</h1>
+
+    {% if restaurantes %}
+        <ul>
+            {% for r in restaurantes %}
+                <li>
+                    <a href="{% url 'core:detalhe_restaurante' pk=r.id %}">
+                        {{ r.nome }}
+                    </a>
+                    - ({{ r.tipo_cozinha }})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum restaurante cadastrado no momento.</p>
+    {% endif %}
+{% endblock %}
