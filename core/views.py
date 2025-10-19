@@ -1,6 +1,8 @@
 from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login  
 from .models import Restaurante, Produto, Pedido, ItemPedido, Cliente
+from .forms import CadastroForm
 
 class RestauranteListView(ListView):
     model = Restaurante
@@ -114,3 +116,33 @@ def pedido_confirmado(request, pedido_id):
     contexto = {
         'pedido': pedido}
     return render(request, 'core/pedido_confirmado.html', contexto)
+
+def cadastro(request):
+    # Se o método for POST, significa que o usuário enviou o formulário
+    if request.method == 'POST':
+        form = CadastroForm(request.POST)
+        if form.is_valid():
+            # 1. Salva o objeto User, mas não no banco ainda (commit=False)
+            user = form.save(commit=False)
+            
+            # 2. Define a senha de forma segura (com hash)
+            user.set_password(form.cleaned_data['password'])
+            
+            # 3. Agora sim, salva o User no banco de dados
+            user.save()
+
+            # 4. Cria o perfil Cliente associado a este User
+            Cliente.objects.create(
+                user=user,
+                telefone=form.cleaned_data['telefone'],
+                endereco=form.cleaned_data['endereco']
+            )
+
+            # 5. Loga o usuário automaticamente após o cadastro
+            login(request, user)
+
+            return redirect('core:lista_restaurantes')
+    else:
+        form = CadastroForm()
+        
+    return render(request, 'core/cadastro.html', {'form': form})
