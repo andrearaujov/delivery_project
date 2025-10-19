@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Carrinho</title>
+</head>
+<body>
+    <h1>Meu Carrinho de Compras</h1>
+
+    {% if itens_carrinho %}
+        <ul>
+            {% for item in itens_carrinho %}
+                <li>
+                    {{ item.quantidade }}x {{ item.produto.nome }}
+                    (R$ {{ item.produto.preco }} cada) -
+                    Subtotal: R$ {{ item.subtotal }}
+                </li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <h2>Total: R$ {{ valor_total }}</h2>
+
+        <a href="{% url 'core:finalizar_pedido' %}">Finalizar Pedido</a>
+    <hr>
+    {% else %}
+        <p>Seu carrinho está vazio.</p>
+    {% endif %}
+
+    <a href="{% url 'core:lista_restaurantes' %}">Continuar comprando</a>
+</body>
+</html>

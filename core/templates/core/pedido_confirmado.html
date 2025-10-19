@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido Confirmado</title>
+</head>
+<body>
+    <h1>Obrigado pelo seu pedido!</h1>
+    <p>Seu pedido #{{ pedido.id }} foi recebido e está sendo preparado.</p>
+    <p>Valor Total: R$ {{ pedido.valor_total }}</p>
+
+    <a href="{% url 'core:lista_restaurantes' %}">Fazer um novo pedido</a>
+</body>
+</html>

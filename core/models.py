@@ -2,18 +2,21 @@
 
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from django.contrib.auth.models import User  
 # -----------------------------------------------------------------------------
 # Entidade: Cliente
 # -----------------------------------------------------------------------------
 class Cliente(models.Model):
-    nome = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    #    on_delete=models.CASCADE significa que se um User for apagado,
+    #    o perfil Cliente correspondente também será.
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     telefone = models.CharField(max_length=15)
     endereco = models.TextField()
 
+    # 4. O __str__ agora usa o username do User associado.
     def __str__(self):
-        return self.nome
+        return self.user.username
 
 # -----------------------------------------------------------------------------
 # Entidade: Restaurante

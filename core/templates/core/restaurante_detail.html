@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ restaurante.nome }}</title>
+</head>
+<body>
+    <a href="{% url 'core:lista_restaurantes' %}">< Voltar para a lista de restaurantes</a>
+    <hr>
+
+    <h1>{{ restaurante.nome }}</h1>
+    <p><strong>Cozinha:</strong> {{ restaurante.tipo_cozinha }}</p>
+    <p><strong>Endereço:</strong> {{ restaurante.endereco }}</p>
+    <p><strong>Horário:</strong> {{ restaurante.horario_funcionamento }}</p>
+
+    <hr>
+
+    <h2>Cardápio</h2>
+    {% if produtos %}
+        <ul>
+            {% for produto in produtos %}
+                <li>
+                    <strong>{{ produto.nome }}</strong> - R$ {{ produto.preco }}
+                    <br>
+                    <em>{{ produto.descricao }}</em>
+                    <br>
+                    <a href="{% url 'core:adicionar_ao_carrinho' produto.id %}">Adicionar ao Carrinho</a>
+                </li>
+                <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum produto cadastrado para este restaurante.</p>
+    {% endif %}
+
+    <hr>
+    <a href="{% url 'core:ver_carrinho' %}">Ver meu Carrinho</a>
+
+</body>
+</html>

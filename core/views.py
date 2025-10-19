@@ -1,6 +1,6 @@
 from django.views.generic import ListView, DetailView
-from .models import Restaurante
-
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Restaurante, Produto, Pedido, ItemPedido, Cliente
 
 class RestauranteListView(ListView):
     model = Restaurante
@@ -62,3 +62,55 @@ def ver_carrinho(request):
     }
 
     return render(request, "core/carrinho.html", contexto)
+
+def finalizar_pedido(request):
+    carrinho = request.session.get('carrinho',{})
+    if not carrinho:
+        return redirect('core:lista_restaurantes')
+    
+    try:
+        cliente = Cliente.objects.get()
+        if not cliente:
+            cliente = Cliente.objects.create(nome="Cliente Padrão", email="cliente@teste.com", telefone="99999", endereco="Rua Teste")
+    except Cliente.DoesNotExist:
+        return redirect('core:ver_carrinho')
+    
+    
+    produto_ids = carrinho.keys()
+    produtos = Produto.objects.filter(id__in=produto_ids)
+    
+    restaurante_do_pedido = produtos.first().restaurante
+    
+    novo_pedido = Pedido.objects.create(
+        cliente=cliente,
+        restaurante=restaurante_do_pedido,
+        status='Pendente' # Status inicial
+    )
+
+    valor_total = 0
+    for produto in produtos:
+        produto_id_str = str(produto.id)
+        quantidade = carrinho[produto_id_str]
+        subtotal = produto.preco * quantidade
+        
+        ItemPedido.objects.create(
+            pedido=novo_pedido,
+            produto=produto,
+            quantidade=quantidade,
+            preco_unitario=produto.preco
+        )
+        valor_total += subtotal
+    
+    novo_pedido.valor_total = valor_total
+    novo_pedido.save()
+
+    request.session['carrinho'] = {}
+
+    return redirect('core:pedido_confirmado', pedido_id=novo_pedido.id)
+    
+    
+def pedido_confirmado(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    contexto = {
+        'pedido': pedido}
+    return render(request, 'core/pedido_confirmado.html', contexto)
