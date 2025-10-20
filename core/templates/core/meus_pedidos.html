@@ -1,0 +1,23 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <h1>Meus Pedidos</h1>
+
+    {% if pedidos %}
+        <ul>
+            {% for pedido in pedidos %}
+                <li>
+                    <strong>Pedido #{{ pedido.id }}</strong> - Feito em: {{ pedido.data_pedido|date:"d/m/Y H:i" }}
+                    <ul>
+                        <li>Restaurante: {{ pedido.restaurante.nome }}</li>
+                        <li>Status: {{ pedido.status }}</li>
+                        <li>Valor Total: R$ {{ pedido.valor_total }}</li>
+                    </ul>
+                </li>
+                <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Você ainda não fez nenhum pedido.</p>
+    {% endif %}
+{% endblock %}

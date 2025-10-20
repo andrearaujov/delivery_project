@@ -1,6 +1,7 @@
 from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login  
+from django.contrib.auth.decorators import login_required
 from .models import Restaurante, Produto, Pedido, ItemPedido, Cliente
 from .forms import CadastroForm
 
@@ -65,36 +66,42 @@ def ver_carrinho(request):
 
     return render(request, "core/carrinho.html", contexto)
 
+@login_required
 def finalizar_pedido(request):
-    carrinho = request.session.get('carrinho',{})
+    carrinho = request.session.get('carrinho', {})
     if not carrinho:
         return redirect('core:lista_restaurantes')
-    
-    try:
-        cliente = Cliente.objects.get()
-        if not cliente:
-            cliente = Cliente.objects.create(nome="Cliente Padrão", email="cliente@teste.com", telefone="99999", endereco="Rua Teste")
-    except Cliente.DoesNotExist:
-        return redirect('core:ver_carrinho')
-    
-    
+
+    # Pega o perfil de Cliente associado ao usuário que está logado na sessão.
+    # A mágica acontece aqui: request.user é o User logado, e .cliente é
+    # o perfil Cliente ligado a ele pelo OneToOneField que criamos.
+    cliente_logado = request.user.cliente
+
+    # O resto da lógica para pegar os produtos e calcular o total continua
     produto_ids = carrinho.keys()
     produtos = Produto.objects.filter(id__in=produto_ids)
-    
+
+    # Validação para caso os produtos não existam mais
+    if not produtos.exists():
+        request.session['carrinho'] = {} # Limpa o carrinho inválido
+        return redirect('core:lista_restaurantes')
+
     restaurante_do_pedido = produtos.first().restaurante
-    
+
+    # Cria o objeto Pedido, agora com o cliente correto
     novo_pedido = Pedido.objects.create(
-        cliente=cliente,
+        cliente=cliente_logado,  # <--- USA O CLIENTE CORRETO
         restaurante=restaurante_do_pedido,
-        status='Pendente' # Status inicial
+        status='Pendente'
     )
 
     valor_total = 0
+    # Cria os Itens do Pedido
     for produto in produtos:
         produto_id_str = str(produto.id)
         quantidade = carrinho[produto_id_str]
         subtotal = produto.preco * quantidade
-        
+
         ItemPedido.objects.create(
             pedido=novo_pedido,
             produto=produto,
@@ -102,14 +109,16 @@ def finalizar_pedido(request):
             preco_unitario=produto.preco
         )
         valor_total += subtotal
-    
+
+    #  Atualiza o valor total no pedido
     novo_pedido.valor_total = valor_total
     novo_pedido.save()
 
+    #  Limpa o carrinho da sessão
     request.session['carrinho'] = {}
 
+    #  Redireciona para a página de confirmação
     return redirect('core:pedido_confirmado', pedido_id=novo_pedido.id)
-    
     
 def pedido_confirmado(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id)
@@ -146,3 +155,14 @@ def cadastro(request):
         form = CadastroForm()
         
     return render(request, 'core/cadastro.html', {'form': form})
+
+@login_required 
+def meus_pedidos(request):
+    # Filtra os pedidos buscando pelo usuário logado (request.user)
+    #    A busca 'cliente__user' atravessa a relação do Pedido -> Cliente -> User
+    pedidos_do_usuario = Pedido.objects.filter(cliente__user=request.user).order_by('-data_pedido')
+
+    contexto = {
+        'pedidos': pedidos_do_usuario
+    }
+    return render(request, 'core/meus_pedidos.html', contexto)

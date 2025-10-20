@@ -12,6 +12,7 @@
             {% if user.is_authenticated %}
                 <span>Olá, {{ user.username }}!</span> |
                 <a href="{% url 'core:ver_carrinho' %}">Meu Carrinho</a> |
+                <a href="{% url 'core:meus_pedidos' %}">Meus Pedidos</a> | <form action="{% url 'core:logout' %}" method="post" style="display: inline;"></form>
                 <form action="{% url 'core:logout' %}" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" style="background:none; border:none; padding:0; color:blue; text-decoration:underline; cursor:pointer;">

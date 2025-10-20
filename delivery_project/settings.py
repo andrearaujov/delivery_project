@@ -123,3 +123,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/'
+
+# URL que o Django deve usar para a PÁGINA DE LOGIN
+LOGIN_URL = '/login/'
