@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <h1>Painel do Dono</h1>
+    <p>Bem-vindo, {{ user.username }}!</p>
+
+    <hr>
+
+    <h2>Seus Restaurantes</h2>
+{% if restaurantes %}
+    <ul>
+        {% for r in restaurantes %}
+            <li>
+                <strong>{{ r.nome }}</strong> - 
+                <a href="{% url 'core:gerenciar_cardapio' %}">Gerenciar Cardápio</a>
+                <a href="{% url 'core:ver_pedidos_restaurante' %}">Ver Pedidos</a> 
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+        <p>Você ainda não cadastrou nenhum restaurante.</p>
+        <a href="{% url 'core:cadastrar_restaurante' %}">Cadastre seu primeiro restaurante agora!</a>
+    {% endif %}
+{% endblock %}

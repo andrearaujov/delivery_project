@@ -1,0 +1,60 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <h1>Pedidos Recebidos</h1>
+
+    {% if pedidos %}
+        <table border="1" style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Pedido ID</th>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                    <th>Ações</th> </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td style="padding: 8px;">#{{ pedido.id }}</td>
+                        <td style="padding: 8px;">{{ pedido.cliente.user.username }}</td>
+                        <td style="padding: 8px;">{{ pedido.data_pedido|date:"d/m/Y H:i" }}</td>
+                        <td style="padding: 8px;">R$ {{ pedido.valor_total }}</td>
+                        <td style="padding: 8px;">{{ pedido.status }}</td>
+                        
+                        <td style="padding: 8px;">
+                            {% if pedido.status == 'Pendente' %}
+                                <form action="{% url 'core:atualizar_status_pedido' pedido.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="novo_status" value="Em preparação">
+                                    <button type="submit">Mudar para 'Em preparação'</button>
+                                </form>
+                            {% elif pedido.status == 'Em preparação' %}
+                                <form action="{% url 'core:atualizar_status_pedido' pedido.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="novo_status" value="A caminho">
+                                    <button type="submit">Mudar para 'A caminho'</button>
+                                </form>
+                            {% elif pedido.status == 'A caminho' %}
+                                <form action="{% url 'core:atualizar_status_pedido' pedido.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="novo_status" value="Entregue">
+                                    <button type="submit">Marcar como 'Entregue'</button>
+                                </form>
+                            {% elif pedido.status == 'Entregue' %}
+                                Finalizado
+                            {% else %}
+                                {{ pedido.status }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Ainda não há pedidos para o seu restaurante.</p>
+    {% endif %}
+    <br>
+    <a href="{% url 'core:painel_restaurante' %}">< Voltar para o Painel</a>
+{% endblock %}

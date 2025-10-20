@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login  
 from django.contrib.auth.decorators import login_required
 from .models import Restaurante, Produto, Pedido, ItemPedido, Cliente
-from .forms import CadastroForm
+from .forms import CadastroForm, RestauranteForm, ProdutoForm
 
 class RestauranteListView(ListView):
     model = Restaurante
@@ -22,9 +22,16 @@ class RestauranteDetailView(DetailView):
         return context
 
 
+@login_required
 def adicionar_ao_carrinho(request, produto_id):
+    
+    if request.user.cliente.tipo_usuario == 'RESTAURANTE':
+        # Se for dono, não pode adicionar ao carrinho. Redireciona para o painel dele.
+        return redirect('core:painel_restaurante')
+    
     produto = get_object_or_404(Produto, id=produto_id)
-    carrinho = request.session.get("carrinho", {})
+
+    carrinho = request.session.get('carrinho', {})
 
     produto_id_str = str(produto.id)
 
@@ -33,12 +40,14 @@ def adicionar_ao_carrinho(request, produto_id):
     else:
         carrinho[produto_id_str] = 1
 
-    request.session["carrinho"] = carrinho
+    request.session['carrinho'] = carrinho
 
-    return redirect("core:detalhe_restaurante", pk=produto.restaurante.id)
-
-
+    return redirect('core:detalhe_restaurante', pk=produto.restaurante.id)
+@login_required
 def ver_carrinho(request):
+    if request.user.cliente.tipo_usuario == 'RESTAURANTE':
+        return redirect('core:painel_restaurante')
+    
     carrinho = request.session.get("carrinho", {})
     produto_ids = carrinho.keys()
     produtos_no_carrinho = Produto.objects.filter(id__in=produto_ids)
@@ -68,6 +77,9 @@ def ver_carrinho(request):
 
 @login_required
 def finalizar_pedido(request):
+    if request.user.cliente.tipo_usuario == 'RESTAURANTE':
+        return redirect('core:painel_restaurante')
+    
     carrinho = request.session.get('carrinho', {})
     if not carrinho:
         return redirect('core:lista_restaurantes')
@@ -90,7 +102,7 @@ def finalizar_pedido(request):
 
     # Cria o objeto Pedido, agora com o cliente correto
     novo_pedido = Pedido.objects.create(
-        cliente=cliente_logado,  # <--- USA O CLIENTE CORRETO
+        cliente=cliente_logado, 
         restaurante=restaurante_do_pedido,
         status='Pendente'
     )
@@ -127,29 +139,23 @@ def pedido_confirmado(request, pedido_id):
     return render(request, 'core/pedido_confirmado.html', contexto)
 
 def cadastro(request):
-    # Se o método for POST, significa que o usuário enviou o formulário
     if request.method == 'POST':
         form = CadastroForm(request.POST)
         if form.is_valid():
-            # 1. Salva o objeto User, mas não no banco ainda (commit=False)
             user = form.save(commit=False)
-            
-            # 2. Define a senha de forma segura (com hash)
             user.set_password(form.cleaned_data['password'])
-            
-            # 3. Agora sim, salva o User no banco de dados
             user.save()
 
-            # 4. Cria o perfil Cliente associado a este User
+            # Cria o perfil Cliente associado, agora incluindo o tipo_usuario
             Cliente.objects.create(
                 user=user,
                 telefone=form.cleaned_data['telefone'],
-                endereco=form.cleaned_data['endereco']
+                endereco=form.cleaned_data['endereco'],
+                # Pega a escolha do usuário no formulário e salva no modelo
+                tipo_usuario=form.cleaned_data['tipo_usuario']
             )
 
-            # 5. Loga o usuário automaticamente após o cadastro
             login(request, user)
-
             return redirect('core:lista_restaurantes')
     else:
         form = CadastroForm()
@@ -166,3 +172,178 @@ def meus_pedidos(request):
         'pedidos': pedidos_do_usuario
     }
     return render(request, 'core/meus_pedidos.html', contexto)
+
+@login_required
+def painel_restaurante(request):
+    # Garante que apenas donos de restaurante acessem
+    if request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes') # Ou uma página de acesso negado
+
+    # Busca os restaurantes que pertencem ao usuário logado
+    restaurantes_do_dono = Restaurante.objects.filter(dono=request.user)
+    
+    contexto = {
+        'restaurantes': restaurantes_do_dono
+    }
+    return render(request, 'core/painel_restaurante.html', contexto)
+
+
+@login_required
+def cadastrar_restaurante(request):
+    if request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    if request.method == 'POST':
+        form = RestauranteForm(request.POST)
+        if form.is_valid():
+            restaurante = form.save(commit=False)
+            # Associa o restaurante ao usuário logado (o dono)
+            restaurante.dono = request.user
+            restaurante.save()
+            # Redireciona para o painel após o sucesso
+            return redirect('core:painel_restaurante')
+    else:
+        form = RestauranteForm()
+
+    return render(request, 'core/cadastrar_restaurante.html', {'form': form})
+
+@login_required
+def gerenciar_cardapio(request):
+    # Proteção de segurança
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    try:
+        # Busca o primeiro restaurante do dono logado.
+        restaurante_do_dono = Restaurante.objects.get(dono=request.user)
+        # Busca os produtos associados a esse restaurante
+        produtos = Produto.objects.filter(restaurante=restaurante_do_dono)
+    except Restaurante.DoesNotExist:
+        # Se ele não tiver restaurante, não há produtos para mostrar
+        restaurante_do_dono = None
+        produtos = []
+
+    contexto = {
+        'restaurante': restaurante_do_dono,
+        'produtos': produtos
+    }
+    return render(request, 'core/gerenciar_cardapio.html', contexto)
+
+
+@login_required
+def adicionar_produto(request):
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    try:
+        restaurante_do_dono = Restaurante.objects.get(dono=request.user)
+    except Restaurante.DoesNotExist:
+        # Não deixa adicionar produto se não tiver restaurante cadastrado
+        return redirect('core:painel_restaurante')
+
+    if request.method == 'POST':
+        # request.FILES é necessário para upload de imagens
+        form = ProdutoForm(request.POST, request.FILES)
+        if form.is_valid():
+            produto = form.save(commit=False)
+            # Associa o produto ao restaurante do dono logado
+            produto.restaurante = restaurante_do_dono
+            produto.save()
+            # Redireciona para a lista de produtos após o sucesso
+            return redirect('core:gerenciar_cardapio')
+    else:
+        form = ProdutoForm()
+
+    return render(request, 'core/adicionar_produto.html', {'form': form})
+
+
+@login_required
+def editar_produto(request, produto_id):
+    # Proteção de segurança
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    # Busca o produto que será editado
+    produto = get_object_or_404(Produto, id=produto_id)
+
+    # Mais uma camada de segurança: garante que o dono do restaurante
+    # só pode editar os produtos do seu próprio restaurante.
+    if produto.restaurante.dono != request.user:
+        return redirect('core:painel_restaurante') # Ou uma página de acesso negado
+
+    if request.method == 'POST':
+        # Ao submeter, passa a 'instance' para que o Django saiba qual produto atualizar
+        form = ProdutoForm(request.POST, request.FILES, instance=produto)
+        if form.is_valid():
+            form.save()
+            return redirect('core:gerenciar_cardapio')
+    else:
+        # Ao carregar a página, preenche o formulário com os dados do produto existente
+        form = ProdutoForm(instance=produto)
+
+    return render(request, 'core/editar_produto.html', {'form': form, 'produto': produto})
+
+@login_required
+def excluir_produto(request, produto_id):
+    # Proteções de segurança (tipo de usuário e dono do produto)
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+    
+    produto = get_object_or_404(Produto, id=produto_id)
+    if produto.restaurante.dono != request.user:
+        return redirect('core:painel_restaurante')
+
+    if request.method == 'POST':
+        # Se o formulário de confirmação foi enviado, exclui o produto
+        produto.delete()
+        return redirect('core:gerenciar_cardapio')
+
+    # Se for um GET, apenas mostra a página de confirmação
+    return render(request, 'core/excluir_produto_confirm.html', {'produto': produto})
+
+@login_required
+def ver_pedidos_restaurante(request):
+    # Proteção de segurança
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    try:
+        # Busca o restaurante do dono logado
+        restaurante_do_dono = Restaurante.objects.get(dono=request.user)
+        # Busca todos os pedidos feitos para esse restaurante, dos mais novos para os mais antigos
+        pedidos = Pedido.objects.filter(restaurante=restaurante_do_dono).order_by('-data_pedido')
+    except Restaurante.DoesNotExist:
+        # Se ele não tiver restaurante, não há pedidos para mostrar
+        return redirect('core:painel_restaurante')
+
+    contexto = {
+        'pedidos': pedidos
+    }
+    return render(request, 'core/ver_pedidos.html', contexto)
+
+
+@login_required
+def atualizar_status_pedido(request, pedido_id):
+    # Proteções de segurança
+    if not hasattr(request.user, 'cliente') or request.user.cliente.tipo_usuario != 'RESTAURANTE':
+        return redirect('core:lista_restaurantes')
+
+    # Garante que a requisição seja do tipo POST
+    if request.method == 'POST':
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+
+        # Segurança: Garante que o dono só pode alterar pedidos do seu próprio restaurante
+        if pedido.restaurante.dono != request.user:
+            return redirect('core:painel_restaurante') # Ou acesso negado
+
+        # Pega o novo status enviado pelo formulário
+        novo_status = request.POST.get('novo_status')
+
+        # Valida se o novo status é uma das opções válidas no modelo Pedido
+        valid_statuses = [status[0] for status in Pedido.STATUS_CHOICES]
+        if novo_status in valid_statuses:
+            pedido.status = novo_status
+            pedido.save()
+
+    # Redireciona de volta para a lista de pedidos em qualquer caso
+    return redirect('core:ver_pedidos_restaurante')

@@ -6,19 +6,29 @@ from django.contrib.auth.models import User
 
 from .models import Cliente, Restaurante, Produto, Pedido, ItemPedido, Entrega, Avaliacao
 
+# Define um "inline" para o modelo Cliente.
 class ClienteInline(admin.StackedInline):
     model = Cliente
     can_delete = False
-    verbose_name_plural = 'clientes'
-    
+    verbose_name_plural = 'Perfil do Cliente'
+    fields = ('telefone', 'endereco', 'tipo_usuario')
+
+# Define uma nova classe UserAdmin que inclui o ClienteInline
 class UserAdmin(BaseUserAdmin):
-    inline=(ClienteInline,)
-    
+    inlines = (ClienteInline,)
+
+# Define uma classe para customizar a exibição do Restaurante
+class RestauranteAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'tipo_cozinha', 'dono')
+    list_filter = ('dono',)
+    search_fields = ('nome', 'tipo_cozinha')
+
+# A ordem aqui é importante: primeiro cancela, depois registra de novo.
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
-    
-# A forma mais simples de registrar os modelos
-admin.site.register(Restaurante)
+
+# Registra os outros modelos
+admin.site.register(Restaurante, RestauranteAdmin)
 admin.site.register(Produto)
 admin.site.register(Pedido)
 admin.site.register(ItemPedido)

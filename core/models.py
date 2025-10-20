@@ -7,14 +7,17 @@ from django.contrib.auth.models import User
 # Entidade: Cliente
 # -----------------------------------------------------------------------------
 class Cliente(models.Model):
-    #    on_delete=models.CASCADE significa que se um User for apagado,
-    #    o perfil Cliente correspondente também será.
+    # 1. DEFININDO AS OPÇÕES DE TIPO DE USUÁRIO
+    TIPO_USUARIO_CHOICES = [
+        ('CLIENTE', 'Cliente'),
+        ('RESTAURANTE', 'Dono de Restaurante'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-
     telefone = models.CharField(max_length=15)
     endereco = models.TextField()
+    tipo_usuario = models.CharField(max_length=20, choices=TIPO_USUARIO_CHOICES, default='CLIENTE')
 
-    # 4. O __str__ agora usa o username do User associado.
     def __str__(self):
         return self.user.username
 
@@ -22,6 +25,9 @@ class Cliente(models.Model):
 # Entidade: Restaurante
 # -----------------------------------------------------------------------------
 class Restaurante(models.Model):
+   
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='restaurantes')
+    
     nome = models.CharField(max_length=100)
     endereco = models.TextField()
     horario_funcionamento = models.CharField(max_length=100, help_text="Ex: 08:00-22:00")

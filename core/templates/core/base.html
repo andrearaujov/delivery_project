@@ -7,22 +7,33 @@
 <body>
     <header>
         <nav>
-            <a href="{% url 'core:lista_restaurantes' %}">Página Inicial</a> | 
-            
-            {% if user.is_authenticated %}
-                <span>Olá, {{ user.username }}!</span> |
-                <a href="{% url 'core:ver_carrinho' %}">Meu Carrinho</a> |
-                <a href="{% url 'core:meus_pedidos' %}">Meus Pedidos</a> | <form action="{% url 'core:logout' %}" method="post" style="display: inline;"></form>
-                <form action="{% url 'core:logout' %}" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" style="background:none; border:none; padding:0; color:blue; text-decoration:underline; cursor:pointer;">
-                        Sair
-                    </button>
-                </form>            {% else %}
-                <a href="{% url 'core:login' %}">Entrar</a> |
-                <a href="{% url 'core:cadastro' %}">Cadastrar</a>
-            {% endif %}
-        </nav>
+    <a href="{% url 'core:lista_restaurantes' %}">Página Inicial</a> | 
+    
+    {% if user.is_authenticated %}
+        <span>Olá, {{ user.username }}!</span> |
+
+        {# BLOCO CONDICIONAL PARA CLIENTES #}
+        {% if user.cliente.tipo_usuario == 'CLIENTE' %}
+            <a href="{% url 'core:ver_carrinho' %}">Meu Carrinho</a> |
+            <a href="{% url 'core:meus_pedidos' %}">Meus Pedidos</a> |
+
+        {# BLOCO CONDICIONAL PARA DONOS DE RESTAURANTE #}
+        {% elif user.cliente.tipo_usuario == 'RESTAURANTE' %}
+            <a href="{% url 'core:painel_restaurante' %}">Meu Painel</a> |
+            <a href="{% url 'core:ver_pedidos_restaurante' %}">Pedidos Recebidos</a> |
+        {% endif %}
+
+        <form action="{% url 'core:logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" style="background:none; border:none; padding:0; color:blue; text-decoration:underline; cursor:pointer;">
+                Sair
+            </button>
+        </form>
+    {% else %}
+        <a href="{% url 'core:login' %}">Entrar</a> |
+        <a href="{% url 'core:cadastro' %}">Cadastrar</a>
+    {% endif %}
+</nav>
     </header>
     <hr>
     

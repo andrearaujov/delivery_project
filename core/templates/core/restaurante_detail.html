@@ -24,7 +24,9 @@
                     <br>
                     <em>{{ produto.descricao }}</em>
                     <br>
+                    {% if user.is_authenticated and user.cliente.tipo_usuario == 'CLIENTE' %}
                     <a href="{% url 'core:adicionar_ao_carrinho' produto.id %}">Adicionar ao Carrinho</a>
+                        {% endif %}
                 </li>
                 <br>
             {% endfor %}

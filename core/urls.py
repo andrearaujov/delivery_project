@@ -14,4 +14,12 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
     path('meus-pedidos/', views.meus_pedidos, name='meus_pedidos'),
+    path('painel/', views.painel_restaurante, name='painel_restaurante'),
+    path('cadastrar-restaurante/', views.cadastrar_restaurante, name='cadastrar_restaurante'),
+    path('painel/cardapio/', views.gerenciar_cardapio, name='gerenciar_cardapio'),
+    path('painel/cardapio/adicionar/', views.adicionar_produto, name='adicionar_produto'),
+    path('painel/cardapio/editar/<int:produto_id>/', views.editar_produto, name='editar_produto'),
+    path('painel/cardapio/excluir/<int:produto_id>/', views.excluir_produto, name='excluir_produto'),
+    path('painel/pedidos/', views.ver_pedidos_restaurante, name='ver_pedidos_restaurante'),
+    path('painel/pedidos/atualizar-status/<int:pedido_id>/', views.atualizar_status_pedido, name='atualizar_status_pedido'),
 ]
