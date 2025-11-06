@@ -1,0 +1,81 @@
+@startuml
+title Diagrama de Classes do Projeto Delivery (com Autenticação)
+skinparam linetype ortho
+
+' --- Definição das Classes ---
+
+class User <<Django Auth>> {
+  +username
+  +email
+  +password
+  +first_name
+  +last_name
+}
+
+class Cliente <<Perfil>> {
+  +telefone: String
+  +endereco: String
+  +tipo_usuario: String
+}
+
+class Restaurante {
+  +nome: String
+  +endereco: String
+  +horario_funcionamento: String
+  +tipo_cozinha: String
+}
+
+class Produto {
+  +nome: String
+  +descricao: String
+  +preco: Decimal
+  +categoria: String
+  +foto: Image
+}
+
+class Pedido {
+  +status: String
+  +data_pedido: DateTime
+  +valor_total: Decimal
+}
+
+class ItemPedido <<Tabela Associativa>> {
+  +quantidade: Integer
+  +preco_unitario: Decimal
+}
+
+class Entrega {
+  +tempo_estimado: String
+}
+
+class Avaliacao {
+  +nota: Integer (1-5)
+  +comentario: String
+  +data_avaliacao: DateTime
+}
+
+
+' --- Relacionamentos ---
+
+' Relações centrais do Usuário
+User "1" -- "1" Cliente : possui (OneToOne)
+User "1" -- "0..*" Restaurante : é dono (ForeignKey)
+
+' Relações do Cliente (Perfil)
+Cliente "1" -- "0..*" Pedido : faz
+Cliente "1" -- "0..*" Avaliacao : escreve
+
+' Relações do Restaurante
+Restaurante "1" -- "0..*" Produto : vende
+Restaurante "1" -- "0..*" Pedido : recebe
+Restaurante "1" -- "0..*" Avaliacao : recebe
+
+' Relações do Pedido
+Pedido "1" -- "1" Entrega : possui (OneToOne)
+
+' Relação Muitos-para-Muitos entre Pedido e Produto
+(Pedido, Produto) .. ItemPedido
+Pedido "1" -- "1..*" ItemPedido
+Produto "1" -- "0..*" ItemPedido
+
+@enduml
