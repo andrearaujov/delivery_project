@@ -71,8 +71,10 @@ class Pedido(models.Model):
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"Pedido #{self.id} - {self.cliente.nome if self.cliente else 'Cliente Excluído'}"
-
+        # Agora ele busca o 'username' do 'User' que está ligado ao 'Cliente'
+        if self.cliente:
+            return f"Pedido #{self.id} - {self.cliente.user.username}"
+        return f"Pedido #{self.id} - [Cliente Excluído]"
 # -----------------------------------------------------------------------------
 # Tabela Associativa: ItemPedido (Conecta Pedido e Produto)
 # -----------------------------------------------------------------------------
