@@ -2,44 +2,153 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #EA1D2C;
+            --primary-dark: #c91620;
+            --primary-light: #f43f5e;
+        }
+        
+        body {
+            @apply bg-gray-50;
+        }
+        
+        .btn-primary {
+            @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+        }
+        
+        .btn-secondary {
+            @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+        }
+        
+        .nav-link {
+            @apply text-gray-700 hover:text-red-600 font-medium transition-colors duration-200;
+        }
+    </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 </head>
-<body>
-    <header>
-        <nav>
-    <a href="{% url 'core:lista_restaurantes' %}">Página Inicial</a> | 
-    
-    {% if user.is_authenticated %}
-        <span>Olá, {{ user.username }}!</span> |
-
-        {# BLOCO CONDICIONAL PARA CLIENTES #}
-        {% if user.cliente.tipo_usuario == 'CLIENTE' %}
-            <a href="{% url 'core:ver_carrinho' %}">Meu Carrinho</a> |
-            <a href="{% url 'core:meus_pedidos' %}">Meus Pedidos</a> |
-
-        {# BLOCO CONDICIONAL PARA DONOS DE RESTAURANTE #}
-        {% elif user.cliente.tipo_usuario == 'RESTAURANTE' %}
-            <a href="{% url 'core:painel_restaurante' %}">Meu Painel</a> |
-            <a href="{% url 'core:ver_pedidos_restaurante' %}">Pedidos Recebidos</a> |
-        {% endif %}
-
-        <form action="{% url 'core:logout' %}" method="post" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit" style="background:none; border:none; padding:0; color:blue; text-decoration:underline; cursor:pointer;">
-                Sair
-            </button>
-        </form>
-    {% else %}
-        <a href="{% url 'core:login' %}">Entrar</a> |
-        <a href="{% url 'core:cadastro' %}">Cadastrar</a>
-    {% endif %}
-</nav>
+<body class="bg-gray-50">
+    <!-- Header/Navigation -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo/Brand -->
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'core:lista_restaurantes' %}" class="text-2xl font-bold text-red-600 hover:text-red-700 transition-colors">
+                        🍕 DeliveryHub
+                    </a>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="{% url 'core:lista_restaurantes' %}" class="nav-link">Restaurantes</a>
+                    
+                    {% if user.is_authenticated %}
+                        <span class="text-gray-600">Bem-vindo, <strong>{{ user.username }}</strong></span>
+                        
+                        {# BLOCO CONDICIONAL PARA CLIENTES #}
+                        {% if user.cliente.tipo_usuario == 'CLIENTE' %}
+                            <a href="{% url 'core:ver_carrinho' %}" class="nav-link">🛒 Carrinho</a>
+                            <a href="{% url 'core:meus_pedidos' %}" class="nav-link">📦 Meus Pedidos</a>
+                        
+                        {# BLOCO CONDICIONAL PARA DONOS DE RESTAURANTE #}
+                        {% elif user.cliente.tipo_usuario == 'RESTAURANTE' %}
+                            <a href="{% url 'core:painel_restaurante' %}" class="nav-link">⚙️ Meu Painel</a>
+                            <a href="{% url 'core:ver_pedidos_restaurante' %}" class="nav-link">📋 Pedidos</a>
+                        {% endif %}
+                        
+                        <form action="{% url 'core:logout' %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-primary text-sm">Sair</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'core:login' %}" class="btn-secondary">Entrar</a>
+                        <a href="{% url 'core:cadastro' %}" class="btn-primary">Cadastrar</a>
+                    {% endif %}
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-red-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2 pb-4">
+                <a href="{% url 'core:lista_restaurantes' %}" class="block nav-link py-2">Restaurantes</a>
+                
+                {% if user.is_authenticated %}
+                    <div class="py-2 text-gray-600">Bem-vindo, <strong>{{ user.username }}</strong></div>
+                    
+                    {% if user.cliente.tipo_usuario == 'CLIENTE' %}
+                        <a href="{% url 'core:ver_carrinho' %}" class="block nav-link py-2">🛒 Carrinho</a>
+                        <a href="{% url 'core:meus_pedidos' %}" class="block nav-link py-2">📦 Meus Pedidos</a>
+                    {% elif user.cliente.tipo_usuario == 'RESTAURANTE' %}
+                        <a href="{% url 'core:painel_restaurante' %}" class="block nav-link py-2">⚙️ Meu Painel</a>
+                        <a href="{% url 'core:ver_pedidos_restaurante' %}" class="block nav-link py-2">📋 Pedidos</a>
+                    {% endif %}
+                    
+                    <form action="{% url 'core:logout' %}" method="post" class="py-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary w-full">Sair</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'core:login' %}" class="block btn-secondary w-full text-center py-2">Entrar</a>
+                    <a href="{% url 'core:cadastro' %}" class="block btn-primary w-full text-center py-2">Cadastrar</a>
+                {% endif %}
+            </div>
+        </nav>
     </header>
-    <hr>
     
-    <main>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% block content %}
         {% endblock %}
     </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h3 class="text-white font-bold mb-4">DeliveryHub</h3>
+                    <p class="text-sm">Conectando você aos melhores restaurantes da cidade.</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Links Rápidos</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><a href="{% url 'core:lista_restaurantes' %}" class="hover:text-white transition-colors">Restaurantes</a></li>
+                        {% if user.is_authenticated %}
+                            <li><a href="{% url 'core:meus_pedidos' %}" class="hover:text-white transition-colors">Meus Pedidos</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Contato</h4>
+                    <p class="text-sm">Email: contato@deliveryhub.com</p>
+                    <p class="text-sm">Telefone: (11) 9999-9999</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-8 text-center text-sm">
+                <p>&copy; 2025 DeliveryHub. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+    </script>
 </body>
 </html>

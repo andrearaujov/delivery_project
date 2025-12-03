@@ -1,20 +1,69 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-    <h1>Restaurantes Disponíveis</h1>
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-8 md:p-12 mb-12 text-white shadow-lg">
+        <div class="max-w-2xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Fome de quê?</h1>
+            <p class="text-lg opacity-90 mb-6">Descubra os melhores restaurantes da sua região e receba suas refeições favoritas em casa.</p>
+            <div class="flex gap-4">
+                <button class="bg-white text-red-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    Ver Promoções
+                </button>
+            </div>
+        </div>
+    </div>
 
-    {% if restaurantes %}
-        <ul>
-            {% for r in restaurantes %}
-                <li>
-                    <a href="{% url 'core:detalhe_restaurante' pk=r.id %}">
-                        {{ r.nome }}
+    <!-- Restaurantes Section -->
+    <div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-8">Restaurantes Disponíveis</h2>
+
+        {% if restaurantes %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for r in restaurantes %}
+                    <a href="{% url 'core:detalhe_restaurante' pk=r.id %}" class="group">
+                        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                            <!-- Image Placeholder -->
+                            <div class="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
+                                <span class="text-6xl opacity-30">🏪</span>
+                                <div class="absolute inset-0 group-hover:bg-black/5 transition-colors duration-300"></div>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="p-6">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-red-600 transition-colors">{{ r.nome }}</h3>
+                                    <div class="bg-yellow-50 px-3 py-1 rounded-lg">
+                                        <span class="text-sm font-bold text-yellow-600">⭐ 4.8</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-sm text-gray-600 mb-4">{{ r.tipo_cozinha }}</p>
+                                
+                                <div class="flex items-center justify-between text-xs text-gray-500 border-t pt-4">
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span>30-45 min</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        </svg>
+                                        <span>Grátis</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                    - ({{ r.tipo_cozinha }})
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Nenhum restaurante cadastrado no momento.</p>
-    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+                <p class="text-blue-800 text-lg font-medium">😔 Nenhum restaurante cadastrado no momento.</p>
+                <p class="text-blue-600 mt-2">Volte em breve para descobrir novos estabelecimentos!</p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

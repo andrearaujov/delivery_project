@@ -2,15 +2,108 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - DeliveryHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Entrar na sua Conta</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Entrar</button>
-    </form>
-    <p>Não tem uma conta? <a href="{% url 'core:cadastro' %}">Cadastre-se</a></p>
+<body class="bg-gradient-to-br from-red-50 to-orange-50 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-red-600 mb-2">🍕 DeliveryHub</h1>
+                <p class="text-gray-600">Bem-vindo de volta!</p>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-800 font-medium">Erro ao fazer login:</p>
+                        {% for error in form.non_field_errors %}
+                            <p class="text-red-600 text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Username Field -->
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Usuário
+                    </label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="{{ form.username.id_for_label }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        placeholder="Seu usuário"
+                        required
+                    >
+                    {% if form.username.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Senha
+                    </label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="{{ form.password.id_for_label }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        placeholder="Sua senha"
+                        required
+                    >
+                    {% if form.password.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.password.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                    Entrar
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="my-6 flex items-center gap-4">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="text-gray-500 text-sm">ou</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Sign Up Link -->
+            <div class="text-center">
+                <p class="text-gray-600 mb-4">Não tem uma conta?</p>
+                <a 
+                    href="{% url 'core:cadastro' %}" 
+                    class="inline-block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-lg transition-colors duration-200"
+                >
+                    Cadastre-se Agora
+                </a>
+            </div>
+
+            <!-- Back Link -->
+            <div class="text-center mt-6">
+                <a href="{% url 'core:lista_restaurantes' %}" class="text-red-600 hover:text-red-700 font-medium transition-colors">
+                    ← Voltar para Restaurantes
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer Text -->
+        <p class="text-center text-gray-600 text-sm mt-6">
+            Ao fazer login, você concorda com nossos Termos de Serviço
+        </p>
+    </div>
 </body>
 </html>
